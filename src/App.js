@@ -8,6 +8,7 @@ export default function App () {
   const [fileName, setFileName] = useState(""); 
   const [excelData, setExcelData] = useState(null); 
   const [error, setError] = useState(null); 
+  const [loader, setLoader] = useState(false); 
   const fileUploader = useRef(null);
 
   const json2array = json => {
@@ -22,7 +23,8 @@ export default function App () {
   const readFile = () => {
     var {file} = excelFile;
     if( file ) {
-        setFileName(file.name.substring(0, file.name.lastIndexOf('.')));
+        setLoader(true);
+        setFileName(file.name.substring(0, file.name.lastIndexOf('.')).replaceAll('_', ' '));
         const reader = new FileReader();
         reader.onload = (evt) => {
           const bstr = evt.target.result;
@@ -31,10 +33,11 @@ export default function App () {
           const ws = wb.Sheets[wsname];
           const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
           setExcelData(json2array(data)); // shows data in json format
+          setLoader(false);
         };
         reader.readAsBinaryString(file);
     } else {
-      setError("Please upload a file first!");
+      setError("Please upload a spreadsheet file before reading it!");
     }
   }
 
@@ -90,7 +93,7 @@ export default function App () {
               (<tr key={i}>{cells}</tr>) :
               (<tr key={i}>{row.map((cell, b) => <td key={b}>{cell === '' && validation[i] === 'Mandatory' ? 'Mandatory' : validationCells(cell)}</td>)}</tr>)
         })
-      return (<table><tbody>
+      return (<table cellSpacing="0"><tbody>
           {header}
           {body}
           </tbody></table>);
@@ -111,8 +114,9 @@ export default function App () {
         >
           Read File
         </button>
-        {error && <h2>{error}</h2>}
+        {error && <h2 style={{color: 'red'}}>{error}</h2>}
         {fileName && <h1>{fileName}</h1>}
+        {loader && <h1 style={{color: 'red', }}>Loading...</h1>}
         {excelData && displayData()}
       </>
   );
